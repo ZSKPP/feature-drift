@@ -8,6 +8,12 @@ import matplotlib.pyplot as plt
 from scipy import stats
 from scipy.io.arff import loadarff
 from sklearn.ensemble import RandomForestClassifier
+from sklearn.ensemble import AdaBoostClassifier
+from sklearn.naive_bayes import GaussianNB
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.svm import SVC
+from sklearn.neighbors import KNeighborsClassifier
+
 from sklearn.metrics import accuracy_score
 from sklearn.preprocessing import LabelEncoder
 from sklearn.linear_model import Lasso
@@ -298,8 +304,13 @@ dataSplit = np.array_split(dataFrame, numberOfChunk)
 X_train = dataSplit[0].drop(columns="class")
 y_train = dataSplit[0]["class"]
 #y_train = y_train.astype('int')
-forest = RandomForestClassifier(random_state=0)
-forest.fit(X_train, y_train)
+classifier = RandomForestClassifier(random_state=0)
+#classifier = GaussianNB()
+#classifier = AdaBoostClassifier()
+#classifier = DecisionTreeClassifier()
+#classifier = SVC()
+#classifier = KNeighborsClassifier(n_neighbors=5)
+classifier.fit(X_train, y_train)
 
 elapsed_time = 0
 st = time.time()
@@ -310,7 +321,7 @@ for i in range(1, numberOfChunk):
     X = dataSplit[i].drop(columns = "class")
     y = dataSplit[i]["class"]
     y = y.astype('int')
-    y_predict = forest.predict(X)
+    y_predict = classifier.predict(X)
     result = accuracy_score(y, y_predict)
     results.append(result)
 
@@ -326,8 +337,7 @@ for i in range(1, numberOfChunk):
             X_train = dataSplit[chunk].drop(columns = "class")
             y_train = dataSplit[chunk]["class"]
             y_train = y_train.astype('int')
-            forest = RandomForestClassifier(random_state = 0)
-            forest.fit(X_train, y_train)
+            classifier.fit(X_train, y_train)
             (feat0, threshold) = computeSTDinChunk(dataSplit[chunk], recordsInChunk / 10, debug)
 et = time.time()
 elapsed_time = et - st
@@ -353,7 +363,7 @@ plt.tick_params(axis='both', which='major', labelsize=12)
 #plt.legend()
 plt.axis([0,len(results),0,1.05])
 plt.grid(True)
-plt.savefig("Figure_" + str(recordsInChunk) + ".pdf")
+#plt.savefig("Figure_" + str(recordsInChunk) + ".pdf")
 plt.show()
 
 

@@ -215,17 +215,18 @@ dataSplit = np.array_split(dataFrame, numberOfChunk)
 # Train RandomForest classifier by chunk number 0.
 X_train = dataSplit[0].drop(columns="class")
 y_train = dataSplit[0]["class"]
-forest = RandomForestClassifier(random_state=0)
-forest.fit(X_train, y_train)
+classifier = RandomForestClassifier(random_state=0)
+classifier.fit(X_train, y_train)
 
 drifts = []
 results = []
 feat = []
 sum_elapse_time = 0
+#accuracy without drift detetion
 for i in range(1, numberOfChunk):
     X = dataSplit[i].drop(columns = "class")
     y = dataSplit[i]["class"]
-    y_predict = forest.predict(X)
+    y_predict = classifier.predict(X)
     result = accuracy_score(y, y_predict)
     results.append(result)
 

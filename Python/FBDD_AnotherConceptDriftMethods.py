@@ -1,14 +1,18 @@
 import time
+import warnings
+warnings.filterwarnings('ignore')
 import pandas as pd                                         #ver. 1.5.3
 import numpy as np                                          #ver. 1.23.5
 import matplotlib.pyplot as plt
-from scipy.io import arff
-from sklearn.gaussian_process.kernels import RBF
+from scipy.io.arff import loadarff
+
 from sklearn.ensemble import RandomForestClassifier
-from sklearn import svm
-from sklearn import naive_bayes
-#from sklearn.neighbors import KNeighborsClassifier
-from sklearn import neighbors
+from sklearn.ensemble import AdaBoostClassifier
+from sklearn.naive_bayes import GaussianNB
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.svm import SVC
+from sklearn.neighbors import KNeighborsClassifier
+
 from sklearn.metrics import accuracy_score
 from sklearn.preprocessing import LabelEncoder
 
@@ -22,10 +26,10 @@ from skmultiflow.drift_detection.page_hinkley import PageHinkley
 
 def loadArffData(fileName):
     classLabelEncoder = LabelEncoder()
-    dataFrame = pd.DataFrame(arff.loadarff(fileName)[0])
-    for i in range(0, len(dataFrame.columns)):
-        col = classLabelEncoder.fit_transform(dataFrame.iloc[:,i].values)
-        dataFrame.iloc[:, i] = col
+    dataFrame = pd.DataFrame(loadarff(fileName)[0])
+    i = len(dataFrame.columns)-1
+    col = classLabelEncoder.fit_transform(dataFrame.iloc[:, i].values)
+    dataFrame.isetitem(i, col)
     return dataFrame
 
 def generateAccuracy(classifier, dataFrame, recordsInChunk):
@@ -72,20 +76,21 @@ def writeResults(f, driftDetectorName, drifts):
     f.write("\n")
 
 RECORDS_IN_CHUNK = 500 #2300
-#classifier = RandomForestClassifier(n_estimators=100, max_depth=2, random_state=31)
-classifier = RandomForestClassifier(random_state=0)
-#classifier = svm.SVC(random_state=31)
-#classifier = neighbors.KNeighborsClassifier(n_neighbors=5)
-#classifier = naive_bayes.GaussianNB
+random_state=0
+#classifier = RandomForestClassifier(random_state=0)
+#classifier = GaussianNB()
+#classifier = AdaBoostClassifier()
+#classifier = DecisionTreeClassifier()
+classifier = SVC()
+#classifier = KNeighborsClassifier(n_neighbors=5)
 
-#file = "spam.arff"
+file = "spam.arff"
 #file = "electricity.arff"
 #file = "spam.arff"
 #file = "phishing.arff"
 #file = "covtype.arff"
 #file = "fin_digits08.arff"
 #file ="fin_digits17.arff"
-file = "fin"
 
 dataFrame = loadArffData(file)
 accuracy = generateAccuracy(classifier, dataFrame, RECORDS_IN_CHUNK)
@@ -95,14 +100,14 @@ f = open("_ResultsConceptRecurringRT2.txt", "w")
 # DDM, EDDM, ADWIN, HDDM_A, HDDM_W, KSWIN, PageHinkley
 sum_elapse_time = 0
 st = time.time()
-print(dataFrame)
+
 driftDetector = DDM(min_num_instances = 30, warning_level = 2.0, out_control_level = 3.0)
 drifts = generateDrifts(classifier, driftDetector, dataFrame, RECORDS_IN_CHUNK)
 #writeResults(f, "DDM", drifts)
 
 #FDDM_OUTCONTROL = 0.9, FDDM_WARNING = 0.95, FDDM_MIN_NUM_INSTANCES = 30
-#driftDetector = EDDM()
-#drifts = generateDrifts(classifier, driftDetector, dataFrame, RECORDS_IN_CHUNK)
+driftDetector = EDDM()
+drifts = generateDrifts(classifier, driftDetector, dataFrame, RECORDS_IN_CHUNK)
 ##writeResults(f, "EDDM", drifts)
 
 #driftDetector = ADWIN(delta = 0.002)
