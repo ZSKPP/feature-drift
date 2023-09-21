@@ -134,7 +134,6 @@ avg_ACC = np.mean(results)
 alpha = 0.01  # significance level for the hypothesis test
 detector = MMD(num_permutations=100, kernel=RBF(length_scale=1.0), random_state=0)
 detector.fit(X_ref)
-j = 0
 k = 0
 for i in range(1, numberOfChunks):
     X = dataSplit[i].drop(columns="class")
@@ -144,7 +143,6 @@ for i in range(1, numberOfChunks):
     mmd, p_value = detector.distance
     y_predict = classifier.predict(X)
     if p_value < alpha:
-        j = j + 1
         k = k + 1
         print("Drift detected @ chunk:", i)
         classifier.fit(X, y)
