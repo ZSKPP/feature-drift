@@ -176,23 +176,23 @@ clf = RandomForestClassifier(random_state = 0)
 ########################################################
 
 ##### Concept drift / Streaming / Change detection
-#driftDetector = BOCD(config = BOCDConfig())
-#driftDetector = CUSUM(config = CUSUMConfig())
-#driftDetector = GeometricMovingAverage(config = GeometricMovingAverageConfig())
-#driftDetector = PageHinkley(config = PageHinkleyConfig())
+#detector = BOCD(config = BOCDConfig())
+#detector = CUSUM(config = CUSUMConfig())
+#detector = GeometricMovingAverage(config = GeometricMovingAverageConfig())
+#detector = PageHinkley(config = PageHinkleyConfig())
 
 ##### Concept drift / Streaming / Statistical process control
-driftDetector = DDM(config = DDMConfig())
-#driftDetector = ECDDWT(config = ECDDWTConfig())
-#driftDetector = EDDM(config = EDDMConfig())
-#driftDetector = HDDMA(config = HDDMAConfig())
-#driftDetector = HDDMW(config = HDDMWConfig())
-#driftDetector = RDDM(config = RDDMConfig())
+detector = DDM(config = DDMConfig())
+#detector = ECDDWT(config = ECDDWTConfig())
+#detector = EDDM(config = EDDMConfig())
+#detector = HDDMA(config = HDDMAConfig())
+#detector = HDDMW(config = HDDMWConfig())
+#detector = RDDM(config = RDDMConfig())
 
 ##### Concept drift / Streaming / Window based
-#driftDetector = ADWIN(config = ADWINConfig())
-#driftDetector = KSWIN(config = KSWINConfig())
-#driftDetector = STEPD(config = STEPDConfig())
+#detector = ADWIN(config = ADWINConfig())
+#detector = KSWIN(config = KSWINConfig())
+#detector = STEPD(config = STEPDConfig())
 
 ########################################################
 inputPath = "Benchmarks/"
@@ -201,11 +201,11 @@ fileName = "spam.arff"
 dataFrame = loadArffData(inputPath + fileName)
 trainingSamples = math.ceil(len(dataFrame) * 0.08)
 accuracyWithoutDrifts = AccuracyWithoutDrifts(clf, dataFrame, trainingSamples)
-(accuracyWithDrifts, drifts) = AccuracyWithDrifts(clf, driftDetector, dataFrame, trainingSamples)
+(accuracyWithDrifts, drifts) = AccuracyWithDrifts(clf, detector, dataFrame, trainingSamples)
 DrawChart(accuracyWithoutDrifts, accuracyWithDrifts, drifts)
 
 print('Classifier name: %s' % clf)
-print('     Drift detector name: %s' % driftDetector)
+print('     Drift detector name: %s' % detector)
 print('     Benchmark name: %s' % fileName)
 print('     Accuracy without drifts = %3.3f' % accuracyWithoutDrifts[-1])
 print('     Accuracy with drifts and retraining classifier = %3.3f' % accuracyWithDrifts[-1])
