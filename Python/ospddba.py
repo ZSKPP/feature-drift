@@ -1,8 +1,8 @@
 import warnings
 warnings.filterwarnings('ignore')
 
-#import numpy as np                                     # ver. 1.19.5
-import pandas as pd                                     # ver. 1.0.0
+#import numpy as np                                     # ver. 1.23.5
+import pandas as pd                                     # ver. 1.5.3
 import math
 from scipy.io import arff
 from sklearn.preprocessing import LabelEncoder
