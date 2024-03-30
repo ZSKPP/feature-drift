@@ -8,4 +8,4 @@ This repository contains a collection of open-source scipts, tools, and data for
 
 The data and source codes deposited here can be downloaded and used without restrictions. However, the authors ask that references to these data in publications include the authors' publication:
 
-**Porwik, P., Wróbel, K., Orczyk, T. et al. FBDD: Function-based drift detector for batch data processing. Cluster Computing (2024). https://doi.org/10.1007/s10586-024-04284-y**
+**Porwik, P., Wrobel, K., Orczyk, T. et al. FBDD: Function-based drift detector for batch data processing. Cluster Computing (2024). https://doi.org/10.1007/s10586-024-04284-y**
