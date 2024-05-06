@@ -30,9 +30,9 @@ def LassoRanking(X, y):
 def loadArffData(fileName):
     classLabelEncoder = LabelEncoder()
     dataFrame = pd.DataFrame(loadarff(fileName)[0])
-    i = len(dataFrame.columns) - 1
-    col = classLabelEncoder.fit_transform(dataFrame.iloc[:, i].values)
-    dataFrame.isetitem(i, col)
+    for column in dataFrame.columns:
+        if not pd.api.types.is_numeric_dtype(dataFrame[column]):
+            dataFrame[column] = classLabelEncoder.fit_transform(dataFrame[column])
     return dataFrame
 
 def computeSTDinChunk(chunk, records_in_chunk):

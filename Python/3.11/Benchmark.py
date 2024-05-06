@@ -43,12 +43,12 @@ from frouros.detectors.concept_drift import ADWIN, ADWINConfig
 from frouros.detectors.concept_drift import KSWIN, KSWINConfig
 from frouros.detectors.concept_drift import STEPD, STEPDConfig
 
-def loadArffData(fileName):
+ddef loadArffData(fileName):
     classLabelEncoder = LabelEncoder()
-    dataFrame = pd.DataFrame(arff.loadarff(fileName)[0])
-    for i in range(0, len(dataFrame.columns)):
-        col = classLabelEncoder.fit_transform(dataFrame.iloc[:, i].values)
-        dataFrame.iloc[:, i] = col
+    dataFrame = pd.DataFrame(loadarff(fileName)[0])
+    for column in dataFrame.columns:
+        if not pd.api.types.is_numeric_dtype(dataFrame[column]):
+            dataFrame[column] = classLabelEncoder.fit_transform(dataFrame[column])
     return dataFrame
 
 def trainAndTest(classifier, dataFrame, position, trainingSamples):
