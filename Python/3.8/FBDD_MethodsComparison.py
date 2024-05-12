@@ -8,7 +8,8 @@
 
 import warnings
 warnings.filterwarnings('ignore')
-
+import os
+import csv
 import pandas as pd
 import matplotlib.pyplot as plt
 from scipy.io import arff
@@ -23,9 +24,14 @@ from skmultiflow.drift_detection.hddm_w import HDDM_W
 from skmultiflow.drift_detection.kswin import KSWIN
 from skmultiflow.drift_detection.page_hinkley import PageHinkley
 
-def loadArffData(fileName):
+def loadData(fileName):
+    # Load data from .arff or .csv file to DataFrame.
+    if os.path.splitext(fileName)[1] == ".arff":
+        dataFrame = pd.DataFrame(loadarff(fileName)[0])
+    if os.path.splitext(fileName)[1] == ".csv":
+        dataFrame = pd.read_table(fileName, delimiter=str(csv.Sniffer().sniff(open(fileName, 'r').read()).delimiter))
+    # Encoding to numeric type.
     classLabelEncoder = LabelEncoder()
-    dataFrame = pd.DataFrame(loadarff(fileName)[0])
     for column in dataFrame.columns:
         if not pd.api.types.is_numeric_dtype(dataFrame[column]):
             dataFrame[column] = classLabelEncoder.fit_transform(dataFrame[column])
@@ -126,7 +132,7 @@ driftDetector = EDDM() #ADWIN(delta = 0.002)
 # driftDetector = KSWIN(alpha = 0.005, window_size = 100, stat_size = 30, data = None)
 # driftDetector = PageHinkley(min_instances = 30, delta = 0.005, threshold = 50, alpha = 1 - 0.0001)
 
-dataFrame = loadArffData(inputPath + fileName)
+dataFrame = loadData(inputPath + fileName)
 
 (accuracyWithDrifts, drifts) = generateAccuracyWithDrifts(classifier, driftDetector, dataFrame, TRAINING_SAMPLES)
 accuracyWithoutDrifts = generateAccuracyWithoutDrifts(classifier, dataFrame, TRAINING_SAMPLES)

@@ -8,7 +8,8 @@
 
 import warnings
 warnings.filterwarnings('ignore')
-
+import os
+import csv
 import pandas as pd
 from scipy.io import arff
 from sklearn.preprocessing import LabelEncoder
@@ -44,9 +45,14 @@ from frouros.detectors.concept_drift import ADWIN, ADWINConfig
 from frouros.detectors.concept_drift import KSWIN, KSWINConfig
 from frouros.detectors.concept_drift import STEPD, STEPDConfig
 
-def loadArffData(fileName):
+def loadData(fileName):
+    # Load data from .arff or .csv file to DataFrame.
+    if os.path.splitext(fileName)[1] == ".arff":
+        dataFrame = pd.DataFrame(loadarff(fileName)[0])
+    if os.path.splitext(fileName)[1] == ".csv":
+        dataFrame = pd.read_table(fileName, delimiter=str(csv.Sniffer().sniff(open(fileName, 'r').read()).delimiter))
+    # Encoding to numeric type.
     classLabelEncoder = LabelEncoder()
-    dataFrame = pd.DataFrame(loadarff(fileName)[0])
     for column in dataFrame.columns:
         if not pd.api.types.is_numeric_dtype(dataFrame[column]):
             dataFrame[column] = classLabelEncoder.fit_transform(dataFrame[column])
@@ -232,7 +238,7 @@ f.write("\n")
 for j in range(0, len(fileNames)):
     print(fileNames[j], end =" ")
 
-    dataFrame = loadArffData(inputPath + fileNames[j])
+    dataFrame = loadData(inputPath + fileNames[j])
     fileName = Path(fileNames[j]).stem
     f.write('%s & ' % (fileName))
 

@@ -8,7 +8,8 @@
 
 import warnings
 warnings.filterwarnings('ignore')
-
+import os
+import csv
 import time
 import pandas as pd
 import numpy as np
@@ -27,9 +28,14 @@ def LassoRanking(X, y):
 
     return scores[0]
 
-def loadArffData(fileName):
+def loadData(fileName):
+    # Load data from .arff or .csv file to DataFrame.
+    if os.path.splitext(fileName)[1] == ".arff":
+        dataFrame = pd.DataFrame(loadarff(fileName)[0])
+    if os.path.splitext(fileName)[1] == ".csv":
+        dataFrame = pd.read_table(fileName, delimiter=str(csv.Sniffer().sniff(open(fileName, 'r').read()).delimiter))
+    # Encoding to numeric type.
     classLabelEncoder = LabelEncoder()
-    dataFrame = pd.DataFrame(loadarff(fileName)[0])
     for column in dataFrame.columns:
         if not pd.api.types.is_numeric_dtype(dataFrame[column]):
             dataFrame[column] = classLabelEncoder.fit_transform(dataFrame[column])
@@ -115,7 +121,7 @@ fileName = "spam.arff"
 
 recordsInChunk = 500
 
-dataFrame = loadArffData(inputPath + fileName)
+dataFrame = loadData(inputPath + fileName)
 numberOfChunk = int(np.ceil(dataFrame.shape[0] / recordsInChunk))
 dataSplit = np.array_split(dataFrame, numberOfChunk)
 
