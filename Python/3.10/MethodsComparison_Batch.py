@@ -1,4 +1,4 @@
-# Python interpreter 3.8
+# Python interpreter 3.10
 # -----------------------
 # Pandas               -> ver. 1.5.3
 # Numpy                -> ver. 1.23.5
@@ -480,10 +480,9 @@ classifier = RF
 
 #NUMBER_OF_DIVISIONS = 10
 nod = 10
-inputPath = "data_synthetic/"
+inputPath = ""
 inputFileNames = [
     ["Abrupt_HP_1_10.arff"],
-    ["Abrupt_HP_1_15.arff"]
 ]
 outputPath = "Results/"
 
