@@ -1,21 +1,24 @@
-# Python interpreter 3.10
+# Python interpreter 3.8
 # -----------------------
 # Pandas               -> ver. 1.5.3
 # Numpy                -> ver. 1.23.5
 # Scipy                -> ver. 1.10.1
 # Scikit-learn         -> ver. 1.2.2
+# MatplotLib           -> ver. 3.7.5
 # Xgboost              -> ver. 2.0.3
 # Scikit-multiflow     -> ver. 0.5.3
-# skfeature-chappers   -> ver. 1.1.0
+# Skfeature-chappers   -> ver. 1.1.0
 
 import warnings
-warnings.filterwarnings('ignore')
-
-import pandas as pd
-import numpy as np
+warnings.filterwarnings("ignore")
+import time
 import os
-import math
 import csv
+import math
+import numpy as np
+import pandas as pd
+
+from skmultiflow.trees import HoeffdingTreeClassifier
 
 from scipy.io.arff import loadarff
 
@@ -37,8 +40,21 @@ from skfeature.utility import construct_W
 
 from xgboost import XGBClassifier
 
-class FBDD():
+import matplotlib.pyplot as plt
+from matplotlib import rc
+rc("pdf", fonttype=42)
 
+class myHoeffdingTree:
+    def __init__(self):
+        self.classifier = HoeffdingTreeClassifier()
+
+    def fit(self, X, y):
+        self.classifier.fit(X.to_numpy(), y.to_numpy().astype("int"))
+
+    def predict(self, X):
+        return self.classifier.predict(X.to_numpy())
+
+class FBDD():
     """ FBDD (Feature Based Drift Detector) method implementation."""
 
     def __init__(self, dataFrame, classifier, ranker, percentage_chunk_size, number_of_divisions, number_of_analyzed_features):
@@ -88,7 +104,7 @@ class FBDD():
 
         return featureRanking
 
-    def __detectDrifts(self, dataSplit, numberOfChunk, recordsInChunk, classCount, featureRanking, numberOfAnalyzedFeatures):
+    def __detectDrifts(self, dataSplit, numberOfChunk, recordsInChunk, classCount, featureRanking, numberOfAnalyzedFeatures, debug):
         acc = []
         mcc = []
         prec = []
@@ -116,10 +132,10 @@ class FBDD():
 
             score = self.__setRanking(np.array(X), np.array(y))
 
-            #print("**********************************************************************")
-
-            #print("Reference feature ranking:", featureRanking)
-            #print("Current feature ranking:", score)
+            if debug:
+                print("**********************************************************************")
+                print("Reference feature ranking:", featureRanking)
+                print("Current feature ranking:", score)
 
             driftingFeatures = []
             driftOccurred = False
@@ -136,9 +152,10 @@ class FBDD():
                 if threshold2 > len(score) - 1:
                     threshold2 = len(score) - 1
 
-                #print("Analyzing feature from reference ranking position %d (feature id %d): " % (j, feat))
-                #print("\t Tolerable rank span is (%d, %d)" % (threshold1, threshold2))
-                #print("\t Current rank is %d" % featurePos)
+                if debug:
+                    print("Analyzing feature from reference ranking position %d (feature id %d): " % (j, feat))
+                    print("\t Tolerable rank span is (%d, %d)" % (threshold1, threshold2))
+                    print("\t Current rank is %d" % featurePos)
 
                 if featurePos < threshold1:
                     driftingFeatures.append(j)
@@ -151,7 +168,8 @@ class FBDD():
                     break
 
             if driftOccurred:
-                #print("Drift on feature(s):", driftingFeatures)
+                if debug:
+                    print("Drift on feature(s):", driftingFeatures)
                 drifts.append(i - 1)
                 # Re-learning
                 chunk = i + 1
@@ -162,19 +180,18 @@ class FBDD():
                     self.__classifier.fit(X_train, y_train)
                     featureRanking = self.__setFeatureAndThreshold(dataSplit[chunk], recordsInChunk / self.__number_of_divisions)
 
-            #print("**********************************************************************")
+            if debug:
+                print("**********************************************************************")
 
-        return acc, f1, prec, drifts
+        return acc, mcc, f1, prec, recall, drifts
 
-    def detectDrifts(self):
+    def detectDrifts(self, debug):
         recordsInChunk = math.ceil(len(self.__dataFrame) * (self.__percentage_chunk_size / 100))
         numberOfChunk = int(np.ceil(self.__dataFrame.shape[0] / recordsInChunk))
         dataSplit = np.array_split(self.__dataFrame, numberOfChunk)
 
         classCount = len(self.__dataFrame[self.__dataFrame.columns[len(self.__dataFrame.columns) - 1]].unique())
-
         featureRanking = self.__setFeatureAndThreshold(dataSplit[0], recordsInChunk / self.__number_of_divisions)
-
         numberOfAnalyzedFeatures = self.__number_of_analyzed_features
 
         # Train RandomForest classifier by chunk number 0.
@@ -182,10 +199,10 @@ class FBDD():
         y_train = dataSplit[0][dataSplit[0].columns[len(dataSplit[0].columns) - 1]]
 
         self.__classifier.fit(X_train, y_train)
-        (acc, f1, prec, drifts) = \
-            self.__detectDrifts(dataSplit, numberOfChunk, recordsInChunk, classCount, featureRanking, numberOfAnalyzedFeatures)
+        (acc, mcc, f1, prec, recall, drifts) = \
+            self.__detectDrifts(dataSplit, numberOfChunk, recordsInChunk, classCount, featureRanking, numberOfAnalyzedFeatures, debug)
 
-        return np.mean(acc), np.mean(f1), np.mean(prec), drifts
+        return recordsInChunk, acc, np.mean(acc), np.mean(mcc), np.mean(f1), np.mean(prec), np.mean(recall), drifts
 
 def loadData(fileName):
     # Load data from .arff or .csv file to DataFrame.
@@ -206,6 +223,83 @@ def loadData(fileName):
             _dataFrame[column] = classLabelEncoder.fit_transform(_dataFrame[column])
 
     return _dataFrame
+
+def DrawChart(driftsWithRetraining, driftsWithoutRetraining, accWithRetraining, accWithoutRetraining):
+    plt.subplot(2, 1, 1)
+    #if len(driftsWithoutRetraining) > 0:
+    #    for i in range(0, len(driftsWithoutRetraining)):
+    #        plt.axvline(x=(driftsWithoutRetraining[i]), color='b', linewidth=1)
+    plt.plot(range(0, len(accWithoutRetraining)), accWithoutRetraining, 'r', linewidth=1)
+    plt.xlabel('Instances', fontsize=12)
+    plt.ylabel('Accuracy', fontsize=12)
+    plt.tick_params(axis='both', which='major', labelsize=12)
+    plt.axis([-0.1, len(accWithoutRetraining), 0, 1.1])
+    #plt.ylim([0,1.1])
+    plt.grid(True)
+
+    plt.subplot(2, 1, 2)
+    if len(driftsWithRetraining) > 0:
+        for i in range(0, len(driftsWithRetraining)):
+            plt.axvline(x=(driftsWithRetraining[i]), color='b', linewidth=1)
+            if (driftsWithRetraining[i]) <= len(driftsWithRetraining):
+                plt.axvline(x=(driftsWithRetraining[i] + 1 - 0.03), color='g', linewidth=1)
+    plt.plot(range(0, len(accWithRetraining)), accWithRetraining, 'r', linewidth=1)
+    plt.xlabel('Instances', fontsize=12)
+    plt.ylabel('Accuracy', fontsize=12)
+    plt.tick_params(axis='both', which='major', labelsize=12)
+    plt.axis([-0.1, len(accWithRetraining), 0, 1.1])
+    #plt.ylim([0,1.1])
+    plt.grid(True)
+
+    plt.show()
+
+def FBDD_Detector(dataFrame, classifier, ranker, percentage_chunk_size, number_of_divisions, number_of_analyzed_features, debug):
+    st = time.time()
+    detector = FBDD(dataFrame, classifier, ranker, percentage_chunk_size, number_of_divisions, number_of_analyzed_features)
+    (recordsInChunk, accWithRetraining, accValueWithRetraining, mccWithRetraining, f1WithRetraining, precWithRetraining, recallWithRetraining, driftsWithRetraining) = detector.detectDrifts(debug)
+    en = time.time()
+    timeWithRetraining = en - st
+
+    st = time.time()
+    detector = FBDD(dataFrame, classifier, ranker, percentage_chunk_size, number_of_divisions, 0)
+    (recordsInChunk, accWithoutRetraining, accValueWithoutRetraining, mccWithoutRetraining, f1WithoutRetraining, precWithoutRetraining, recallWithoutRetraining, driftsWithoutRetraining) = detector.detectDrifts(debug)
+    en = time.time()
+    timeWithoutRetraining = en - st
+
+    driftsInRawData = []
+    for i in range(0, len(driftsWithRetraining)):
+        driftsInRawData.append(driftsWithRetraining[i] * recordsInChunk)
+
+    print("-----------------------------------------------------------")
+    print(" Benchmark                      : ", fileName)
+    print(" Classifier name                : ", type(classifier).__name__)
+    print(" Drift detector name            :  FBDD")
+    print(" Number of classes              : ", len(dataFrame[dataFrame.columns[len(dataFrame.columns) - 1]].unique()))
+    print(" Records in chunk               : ", recordsInChunk)
+    print(" Number of features             : ", dataFrame.shape[1] - 1)
+    print("-----------------------------------------------------------")
+    print("  Without drifts detection: ")
+    print("     Accuracy                   : ", round(accValueWithoutRetraining, 3))
+    print("     MCC                        : ", round(mccWithoutRetraining, 3))
+    print("     Precision                  : ", round(precWithoutRetraining, 3))
+    print("     Sensitivity (Recall)       : ", round(recallWithoutRetraining, 3))
+    print("     F1                         : ", round(f1WithoutRetraining, 3))
+    print("  Time                          : ", round(timeWithoutRetraining, 3))
+    print("-----------------------------------------------------------")
+    print("  With drifts detection and retraining: ")
+    print("     Accuracy                   : ", round(accValueWithRetraining, 3))
+    print("     MCC                        : ", round(mccWithRetraining, 3))
+    print("     Precision                  : ", round(precWithRetraining, 3))
+    print("     Sensitivity (Recall)       : ", round(recallWithRetraining, 3))
+    print("     F1                         : ", round(f1WithRetraining, 3))
+    print("  Time                          : ", round(timeWithRetraining, 3))
+    print("-----------------------------------------------------------")
+    print(" Number of drifts detected      : ", len(driftsWithRetraining))
+    print(" Position of drifts in chunks   : ", driftsWithRetraining)
+    print(" Position of drifts in raw data : ", driftsInRawData)
+    print("-----------------------------------------------------------")
+
+    DrawChart(driftsWithRetraining, driftsWithoutRetraining, accWithRetraining, accWithoutRetraining)
 
 ##################################################################################
 # Main()
@@ -240,16 +334,20 @@ BAGGING = BaggingClassifier(TREE, random_state=random_state)
 LDA = LinearDiscriminantAnalysis()
 QDA = QuadraticDiscriminantAnalysis()
 
+HOEFF = myHoeffdingTree()
 XGB = XGBClassifier()
 
 ########################################################
+classifier = HOEFF
 
-dataFrame = loadData("Abrupt_HP_1_10.arff")
+inputPath = ""
+fileName = "Abrupt_HP_1_10.arff"
+dataFrame = loadData(inputPath + fileName)
 
-detector = FBDD(dataFrame=dataFrame, classifier=RF, ranker="LAPS", percentage_chunk_size=5, number_of_divisions=10, number_of_analyzed_features=1)
-(acc, f1, prec, drifts) = detector.detectDrifts()
-
-print("Accuracy = %3.3f" % acc)
-print("F1 score = %3.3f" % f1)
-print("Precision = %3.3f" % prec)
-print("Number of drifts =", len(drifts))
+FBDD_Detector(dataFrame=dataFrame,
+              classifier=classifier,
+              ranker="LASS",                # "LASS" or "LAPS"
+              percentage_chunk_size=5,
+              number_of_divisions=10,
+              number_of_analyzed_features=1,
+              debug=False)
