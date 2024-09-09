@@ -310,7 +310,7 @@ STEPD = STEPD(config=STEPDConfig())
 classifier = HOEFF
 driftDetector = ADWIN
 
-inputPath = "Benchmarks/"
+inputPath = ""
 fileName = "Abrupt_HP_1_10.arff"
 
 dataFrame = loadData(inputPath + fileName)
