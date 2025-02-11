@@ -1,1 +1,14 @@
-
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+authors:
+  - family-names: Porwik
+    given-names: Piotr
+    orcid: https://orcid.org/0000-0001-8989-9478
+  - family-names: Wróbel
+    given-names: Krzysztof
+    orcid: https://orcid.org/0000-0001-7339-1100
+  - family-names: Orczyk
+    given-names: Tomasz
+    orcid: https://orcid.org/0000-0002-4664-8369
+title: "Feature drift experiments repository"
+date-released: 2024-03-30
