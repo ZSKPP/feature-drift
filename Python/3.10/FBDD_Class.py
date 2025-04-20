@@ -68,7 +68,7 @@ class FBDD():
     def __setRanking(self, X, y):
         scores = []
         if self.__ranker == 'LASS':
-            lasso = Lasso(alpha=0.001)
+            lasso = Lasso(alpha=0.05)
             scores.append(np.argsort(lasso.fit(X, y).coef_))
         K = 5
         if self.__ranker == 'LAPS':
