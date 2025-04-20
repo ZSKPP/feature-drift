@@ -2,7 +2,7 @@
 # -----------------------
 # Pandas               -> ver. 1.5.3
 # Numpy                -> ver. 1.23.5
-# Scipy                -> ver. 1.10.1
+# Scipy                -> ver. 1.10.1 
 # Scikit-learn         -> ver. 1.2.2
 # Frourous             -> ver. 0.6.1
 # Xgboost              -> ver. 2.0.3
